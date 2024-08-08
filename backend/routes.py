@@ -29,3 +29,76 @@ def get_books():
         'author_id': book.author_id,
         'member_id': book.member_id
     } for book in books])
+
+@bp.route('/post', methods=['POST'])
+def add_book():
+    data = request.get_json()
+    new_book = Book(title=data['title'], author_id=data['author_id'])
+    db.session.add(new_book)
+    db.session.commit()
+    return jsonify({'id': new_book.id, 'title': new_book.title}), 201
+
+@bp.route('/books/<int:id>', methods=['GET'])
+def get_book(id):
+    book = Book.query.get_or_404(id)
+    return jsonify({
+        'id': book.id,
+        'title': book.title,
+        'author_id': book.author_id,
+        'member_id': book.member_id
+    })
+
+@bp.route('/books/<int:id>', methods=['PUT'])
+def update_book(id):
+    data = request.get_json()
+    book = Book.query.get_or_404(id)
+    book.title = data['title']
+    book.author_id = data['author_id']
+    db.session.commit()
+    return jsonify({
+        'id': book.id,
+        'title': book.title,
+        'author_id': book.author_id
+    })
+
+@bp.route('/books/<int:id>', methods=['DELETE'])
+def delete_book(id):
+    book = Book.query.get_or_404(id)
+    db.session.delete(book)
+    db.session.commit()
+    return '', 204
+
+# Member Routes
+@bp.route('/members', methods=['GET'])
+def get_members():
+    members = Member.query.all()
+    return jsonify([{'id': member.id, 'name': member.name} for member in members])
+
+@bp.route('/members', methods=['POST'])
+def add_member():
+    data = request.get_json()
+    new_member = Member(name=data['name'])
+    db.session.add(new_member)
+    db.session.commit()
+    return jsonify({'id': new_member.id, 'name': new_member.name}), 201
+
+# Loan Routes
+@bp.route('/loans', methods=['POST'])
+def create_loan():
+    data = request.get_json()
+    new_loan = Loan(
+        book_id=data['book_id'],
+        member_id=data['member_id'],
+        loan_date=data['loan_date']
+    )
+    db.session.add(new_loan)
+    db.session.commit()
+    return jsonify({'id': new_loan.id}), 201
+
+@bp.route('/loans/<int:id>', methods=['PUT'])
+def return_loan(id):
+    data = request.get_json()
+    loan = Loan.query.get_or_404(id)
+    loan.return_date = data['return_date']
+    db.session.commit()
+    return jsonify({'id': loan.id, 'return_date': loan.return_date})
